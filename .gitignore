@@ -102,3 +102,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Sensitive data
+api_secret.json
+api/api_secret.json
