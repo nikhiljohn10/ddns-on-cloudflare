@@ -8,9 +8,9 @@ import CloudFlare
 import secrets
 
 class DDNS(object):
-	def __init__(self,secret_path):
+	def __init__(self):
 		super(DDNS, self).__init__()
-		zone_name, email, token, certtoken = secrets.get(secret_path)
+		zone_name, email, token, certtoken = secrets.get()
 		self.zone_name = zone_name
 		self.ip='0.0.0.0'
 		self.dns = CloudFlare.CloudFlare(email = email, token = token, certtoken = certtoken)

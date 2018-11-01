@@ -6,5 +6,5 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 echo "Cleaning source"
-rm -rf dist main.spec api_secret.json build 
+rm -rf dist main.spec api_secret.json build
 echo "Source cleaned"

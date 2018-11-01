@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [[ $EUID -ne 0 ]]; then
 	echo "Please run this script as root" 1>&2
@@ -6,10 +6,12 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 echo "Installing DDNS"
+echo
+echo "Login to cloudflare.com and choose domain you want to host the DDNS. The API keys are inside 'Overview > Domain Summary > Get your API Key > API Keys'."
 
 # Collecting Data
 
-read -p "Enter zone name: " -r zone_name
+read -p "Enter domain name: " -r zone_name
 read -p "Enter email id: " -r email
 read -p "Enter API Key: " -r token
 read -p "Enter User Service Key: " -r certtoken
@@ -30,6 +32,7 @@ cat > api_secret.json << EOF
 }
 EOF
 
+
 # Compiling the package
 
 
@@ -38,36 +41,57 @@ pyinstaller --noconfirm --clean --onefile \
 	main.py
 
 cp ./dist/main ./ddns
-
-# Setting up systemd service
-
-echo "Setting up systemd service"
 cp ddns /usr/sbin/ddns
-cat > /lib/systemd/system/ddns.service << EOF 
-[Unit]
-Description=DDNS on Cloudflare
-StartLimitInterval=4
-After=network.target
 
-[Service]
-Type=simple
-Restart=always
-RestartSec=1
-User=root
-ExecStart=/usr/sbin/ddns '$(pwd)'
+# Finding Init Process
 
-[Install]
-WantedBy=multi-user.target
-EOF
-chmod 644 /lib/systemd/system/ddns.service
-systemctl daemon-reload
-systemctl enable ddns.service
-systemctl start ddns.service
+if [ ! -f "/sbin/launchd" ]; then
+	INIT="$(readlink /sbin/init)" &> /dev/null
+	if [ "$?" -ne 0 ]; then
+		INIT="$(dpkg -S /sbin/init)" &> /dev/null
+		if [ "$?" -ne 0 ]; then
+			INIT="$(rpm -qf /sbin/init)" &> /dev/null
+		fi
+	fi
+else
+	INIT="launchd"
+fi
+
+case $(echo $INIT | sed 's/^.*\///g') in
+	systemd)
+		echo "Found Systemd"
+		sh ./process/systemd.sh
+		break
+		;;
+	launchd)
+		echo "Found Launchd"
+		break
+		;;
+	init.d)
+		echo "Found System V"
+		break
+		;;
+	upstart)
+		echo "Found Upstart"
+		break
+		;;
+	procd)
+		echo "Found Procd"
+		break
+		;;
+	busybox)
+		echo "Found BusyBox"
+		break
+		;;
+	*)
+		echo "Init process unidentified"
+		exit(1)
+		;;
+  esac
+
 
 # Cleaning setup
 
 pip uninstall -y pyinstaller
 
 echo "Setup completed successfully"
-
-systemctl status ddns.service

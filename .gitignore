@@ -90,6 +90,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# MacOS Files
+._*
+.DS_Store
+test.sh
+
 # Spyder project settings
 .spyderproject
 .spyproject

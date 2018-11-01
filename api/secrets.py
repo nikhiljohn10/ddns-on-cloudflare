@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import json
+import os
 
-def get(path):
-	with open(path+'/api_secret.json') as f:
+def get():
+	with open(os.getcwd()+'/api_secret.json') as f:
 	    data = json.load(f)
 	return (data['zone_name'], data['email'], data['token'], data['certtoken'])
